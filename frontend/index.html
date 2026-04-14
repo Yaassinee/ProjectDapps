@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fruit Market — Decentralized Marketplace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════
+       DESIGN TOKENS — OpenSea / Uniswap inspired
+       ═══════════════════════════════════════════════════════════════════ */
+    :root {
+      --font: 'Plus Jakarta Sans', -apple-system, sans-serif;
+
+      /* Surfaces */
+      --bg:          #f8fafb;
+      --surface:     #ffffff;
+      --surface-alt: #f1f5f9;
+      --border:      #e2e8f0;
+      --border-hover:#cbd5e1;
+
+      /* Brand */
+      --brand:       #2563eb;
+      --brand-hover: #1d4ed8;
+      --brand-soft:  #dbeafe;
+      --brand-text:  #1e40af;
+
+      /* Accent — green for "market" */
+      --green:       #16a34a;
+      --green-soft:  #dcfce7;
+      --green-text:  #166534;
+
+      /* Status */
+      --red:         #dc2626;
+      --red-soft:    #fee2e2;
+      --red-text:    #991b1b;
+      --amber:       #d97706;
+      --amber-soft:  #fef3c7;
+      --amber-text:  #92400e;
+
+      /* Text */
+      --text-1:      #0f172a;
+      --text-2:      #475569;
+      --text-3:      #94a3b8;
+
+      /* Effects */
+      --shadow-sm:   0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md:   0 4px 16px rgba(0,0,0,0.06);
+      --shadow-lg:   0 8px 32px rgba(0,0,0,0.08);
+      --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 6px 16px rgba(0,0,0,0.04);
+      --radius:      16px;
+      --radius-sm:   10px;
+      --radius-xs:   6px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       BASE
+       ═══════════════════════════════════════════════════════════════════ */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text-1);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       NAVBAR — sticky glassmorphism
+       ═══════════════════════════════════════════════════════════════════ */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255,255,255,0.82);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      text-decoration: none;
+    }
+
+    .nav-brand .logo {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .nav-brand span {
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: var(--text-1);
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .badge {
+      padding: 0.3rem 0.7rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .badge-green { background: var(--green-soft); color: var(--green-text); }
+    .badge-blue  { background: var(--brand-soft); color: var(--brand-text); }
+
+    .network-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.8rem;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-2);
+    }
+
+    .network-pill .dot {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .wallet-addr {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.82rem;
+      padding: 0.4rem 0.8rem;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-2);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       BUTTONS
+       ═══════════════════════════════════════════════════════════════════ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.65rem 1.3rem;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(.4,0,.2,1);
+      white-space: nowrap;
+    }
+
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    .btn-brand {
+      background: var(--brand);
+      color: #fff;
+      box-shadow: 0 1px 2px rgba(37,99,235,0.3);
+    }
+    .btn-brand:hover:not(:disabled) { background: var(--brand-hover); box-shadow: 0 4px 12px rgba(37,99,235,0.25); }
+
+    .btn-green {
+      background: var(--green);
+      color: #fff;
+      box-shadow: 0 1px 2px rgba(22,163,74,0.3);
+    }
+    .btn-green:hover:not(:disabled) { background: #15803d; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-2);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--surface-alt); border-color: var(--border-hover); }
+
+    .btn-danger {
+      background: var(--red);
+      color: #fff;
+    }
+    .btn-danger:hover:not(:disabled) { background: #b91c1c; }
+
+    .btn-lg { padding: 0.8rem 2rem; font-size: 1rem; border-radius: var(--radius); }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       LAYOUT
+       ═══════════════════════════════════════════════════════════════════ */
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       HERO BANNER (before wallet connected)
+       ═══════════════════════════════════════════════════════════════════ */
+    .hero {
+      text-align: center;
+      padding: 5rem 1rem 4rem;
+      animation: fadeUp 0.6s ease;
+    }
+
+    .hero h2 {
+      font-size: 2.8rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, var(--text-1), var(--brand));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--text-2);
+      max-width: 520px;
+      margin: 0 auto 2rem;
+      line-height: 1.6;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       TABS — OpenSea style
+       ═══════════════════════════════════════════════════════════════════ */
+    .tabs {
+      display: flex;
+      gap: 0.25rem;
+      margin-bottom: 2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.3rem;
+      width: fit-content;
+    }
+
+    .tab-btn {
+      padding: 0.6rem 1.3rem;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-3);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover { color: var(--text-1); background: var(--surface-alt); }
+
+    .tab-btn.active {
+      background: var(--text-1);
+      color: #fff;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active {
+      display: block;
+      animation: fadeUp 0.3s ease;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       PRODUCT GRID — Card with image
+       ═══════════════════════════════════════════════════════════════════ */
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .product-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: all 0.25s cubic-bezier(.4,0,.2,1);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .product-card:hover {
+      border-color: var(--border-hover);
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-4px);
+    }
+
+    .product-card.inactive {
+      opacity: 0.35;
+      pointer-events: none;
+      filter: grayscale(0.7);
+    }
+
+    .product-img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      background: var(--surface-alt);
+      transition: transform 0.4s cubic-bezier(.4,0,.2,1);
+    }
+
+    .product-card:hover .product-img {
+      transform: scale(1.04);
+    }
+
+    .product-img-wrap {
+      overflow: hidden;
+      position: relative;
+    }
+
+    .product-img-wrap .stock-badge-overlay {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+    }
+
+    .product-body {
+      padding: 1rem 1.2rem 1.3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      flex: 1;
+    }
+
+    .product-body h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-1);
+    }
+
+    .product-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .product-price {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--text-1);
+    }
+
+    .product-price small {
+      font-weight: 500;
+      color: var(--text-3);
+      font-size: 0.8rem;
+    }
+
+    .seller-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.78rem;
+      color: var(--text-3);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+
+    .seller-chip .avatar {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #818cf8, #6366f1);
+    }
+
+    .stock-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .stock-badge.in-stock   { background: var(--green-soft); color: var(--green-text); }
+    .stock-badge.low-stock  { background: var(--amber-soft); color: var(--amber-text); }
+    .stock-badge.out        { background: var(--red-soft);   color: var(--red-text); }
+
+    .buy-section {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-top: auto;
+      padding-top: 0.8rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .qty-input {
+      width: 56px;
+      padding: 0.45rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xs);
+      text-align: center;
+      font-family: var(--font);
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: border-color 0.15s;
+    }
+
+    .qty-input:focus { outline: none; border-color: var(--brand); }
+
+    .buy-section .btn { flex: 1; }
+
+    .own-badge {
+      font-size: 0.8rem;
+      color: var(--text-3);
+      font-style: italic;
+      margin-top: auto;
+      padding-top: 0.5rem;
+    }
+
+    /* ─── Rating stars ─── */
+    .rating-row {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.82rem;
+      color: var(--text-2);
+    }
+
+    .star-filled { color: #f59e0b; }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       FORMS — Sell / Rate / My Products
+       ═══════════════════════════════════════════════════════════════════ */
+    .form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      max-width: 640px;
+      box-shadow: var(--shadow-card);
+    }
+
+    .form-card h2 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      margin-bottom: 1.5rem;
+      color: var(--text-1);
+    }
+
+    .field {
+      margin-bottom: 1.2rem;
+    }
+
+    .field label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-2);
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .field input, .field select, .field textarea {
+      width: 100%;
+      padding: 0.7rem 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text-1);
+      background: var(--surface);
+      transition: all 0.15s ease;
+    }
+
+    .field input:focus, .field select:focus, .field textarea:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px var(--brand-soft);
+    }
+
+    .field input::placeholder { color: var(--text-3); }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .field-row-3 {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 1rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       MY PRODUCTS LIST
+       ═══════════════════════════════════════════════════════════════════ */
+    .my-product-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      transition: border-color 0.2s;
+    }
+
+    .my-product-item:hover { border-color: var(--border-hover); }
+
+    .my-product-img {
+      width: 80px;
+      height: 80px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+      background: var(--surface-alt);
+      flex-shrink: 0;
+    }
+
+    .my-product-info { flex: 1; }
+    .my-product-info h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .my-product-info p { font-size: 0.85rem; color: var(--text-2); }
+
+    .my-product-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .my-product-actions input {
+      width: 90px;
+      padding: 0.4rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xs);
+      font-family: var(--font);
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .my-product-actions input:focus { outline: none; border-color: var(--brand); }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       TOAST NOTIFICATIONS
+       ═══════════════════════════════════════════════════════════════════ */
+    #toast-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 300;
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 0.6rem;
+    }
+
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.85rem 1.2rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      font-weight: 600;
+      max-width: 380px;
+      box-shadow: var(--shadow-lg);
+      animation: toastIn 0.35s cubic-bezier(.4,0,.2,1);
+      border: 1px solid;
+    }
+
+    .toast.success { background: var(--green-soft); color: var(--green-text); border-color: #bbf7d0; }
+    .toast.error   { background: var(--red-soft);   color: var(--red-text);   border-color: #fecaca; }
+    .toast.info    { background: var(--brand-soft);  color: var(--brand-text); border-color: #bfdbfe; }
+
+    .toast-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(16px) scale(0.95); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       SPINNER
+       ═══════════════════════════════════════════════════════════════════ */
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       EMPTY STATE
+       ═══════════════════════════════════════════════════════════════════ */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-3);
+    }
+
+    .empty-state .icon { font-size: 3.5rem; margin-bottom: 1rem; }
+    .empty-state h3 { font-size: 1.1rem; color: var(--text-2); margin-bottom: 0.4rem; }
+    .empty-state p { font-size: 0.9rem; }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       PRODUCT DETAIL MODAL — slide-in panel
+       ═══════════════════════════════════════════════════════════════════ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.45);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 520px;
+      max-width: 100vw;
+      height: 100vh;
+      background: var(--surface);
+      z-index: 201;
+      overflow-y: auto;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(.4,0,.2,1);
+      box-shadow: -8px 0 40px rgba(0,0,0,0.12);
+    }
+
+    .modal-panel.open {
+      transform: translateX(0);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-2);
+      transition: all 0.15s;
+      z-index: 5;
+    }
+
+    .modal-close:hover {
+      background: var(--surface-alt);
+      color: var(--text-1);
+    }
+
+    .modal-img {
+      width: 100%;
+      height: 280px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .modal-content {
+      padding: 1.5rem 2rem 2rem;
+    }
+
+    .modal-content h2 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal-price-row {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .modal-price {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--text-1);
+    }
+
+    .modal-price small {
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--text-3);
+    }
+
+    .modal-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .detail-box {
+      background: var(--surface-alt);
+      border-radius: var(--radius-sm);
+      padding: 0.8rem 1rem;
+    }
+
+    .detail-box .label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-3);
+      margin-bottom: 0.25rem;
+    }
+
+    .detail-box .value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-1);
+    }
+
+    .modal-buy-section {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      padding: 1.2rem 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-buy-section .qty-input { width: 70px; }
+    .modal-buy-section .btn { flex: 1; }
+
+    /* ─── Reviews section inside modal ─── */
+    .reviews-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .review-card {
+      display: flex;
+      gap: 0.8rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+      animation: fadeUp 0.3s ease both;
+    }
+
+    .review-card:last-child { border-bottom: none; }
+
+    .review-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .review-body { flex: 1; }
+
+    .review-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.3rem;
+    }
+
+    .review-addr {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-2);
+    }
+
+    .review-stars {
+      font-size: 0.85rem;
+    }
+
+    .review-comment {
+      font-size: 0.88rem;
+      color: var(--text-2);
+      line-height: 1.5;
+    }
+
+    .no-reviews {
+      text-align: center;
+      padding: 1.5rem;
+      color: var(--text-3);
+      font-size: 0.9rem;
+    }
+
+    /* clickable card cursor */
+    .product-card { cursor: pointer; }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       RESPONSIVE
+       ═══════════════════════════════════════════════════════════════════ */
+    @media (max-width: 640px) {
+      nav { padding: 0 1rem; }
+      .nav-brand span { display: none; }
+      .hero h2 { font-size: 1.8rem; }
+      .tabs { width: 100%; overflow-x: auto; }
+      .field-row, .field-row-3 { grid-template-columns: 1fr; }
+      .product-grid { grid-template-columns: 1fr; }
+      .my-product-item { flex-direction: column; text-align: center; }
+      .my-product-actions { justify-content: center; }
+      .modal-panel { width: 100vw; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ NAVBAR ══════════════ -->
+<nav>
+  <div class="nav-brand">
+    <div class="logo">🍊</div>
+    <span>Fruit Market</span>
+  </div>
+  <div class="nav-right">
+    <span id="version-display"></span>
+    <span id="network-pill" style="display:none;" class="network-pill">
+      <span class="dot"></span> Sepolia
+    </span>
+    <span id="wallet-addr" style="display:none;" class="wallet-addr"></span>
+    <button class="btn btn-brand" id="connect-btn" onclick="connectWallet()">
+      Connect Wallet
+    </button>
+  </div>
+</nav>
+
+<!-- ══════════════ TOASTS ══════════════ -->
+<div id="toast-container"></div>
+
+<!-- ══════════════ PRODUCT DETAIL MODAL ══════════════ -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal()"></div>
+<div class="modal-panel" id="modal-panel">
+  <button class="modal-close" onclick="closeModal()">✕</button>
+  <div id="modal-inner"><!-- filled by JS --></div>
+</div>
+
+<main>
+  <!-- ══════════════ HERO (shown before wallet connect) ══════════════ -->
+  <div id="hero" class="hero">
+    <h2>Achetez & vendez des fruits<br/>sur la blockchain</h2>
+    <p>Marketplace décentralisée propulsée par Ethereum. Connectez votre wallet pour commencer.</p>
+    <button class="btn btn-brand btn-lg" onclick="connectWallet()">
+      🦊 Connecter MetaMask
+    </button>
+  </div>
+
+  <!-- ══════════════ APP (hidden until connected) ══════════════ -->
+  <div id="app" style="display:none;">
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="catalogue" onclick="switchTab('catalogue')">Catalogue</button>
+      <button class="tab-btn" data-tab="sell" onclick="switchTab('sell')">Vendre</button>
+      <button class="tab-btn" data-tab="my-products" onclick="switchTab('my-products')">Mes produits</button>
+      <button class="tab-btn" data-tab="rate" id="tab-rate-btn" style="display:none;" onclick="switchTab('rate')">Évaluer</button>
+    </div>
+
+    <!-- Tab: Catalogue -->
+    <div class="tab-content active" id="tab-catalogue">
+      <div class="product-grid" id="product-grid">
+        <div class="empty-state">
+          <div class="icon">📦</div>
+          <h3>Chargement…</h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Sell -->
+    <div class="tab-content" id="tab-sell">
+      <div class="form-card">
+        <h2>📦 Ajouter un produit</h2>
+        <div class="field-row-3">
+          <div class="field">
+            <label>Nom du fruit</label>
+            <input type="text" id="inp-name" placeholder="ex: Pomme" />
+          </div>
+          <div class="field">
+            <label>Prix (ETH)</label>
+            <input type="number" id="inp-price" step="0.001" min="0.001" placeholder="0.01" />
+          </div>
+          <div class="field">
+            <label>Stock</label>
+            <input type="number" id="inp-stock" step="1" min="1" placeholder="100" />
+          </div>
+        </div>
+        <button class="btn btn-green btn-lg" id="btn-add" onclick="addProduct()" style="width:100%;">
+          Mettre en vente
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab: My Products -->
+    <div class="tab-content" id="tab-my-products">
+      <div id="my-products-list"></div>
+    </div>
+
+    <!-- Tab: Rate (V2 only) -->
+    <div class="tab-content" id="tab-rate">
+      <div class="form-card">
+        <h2>⭐ Évaluer un vendeur</h2>
+        <div class="field">
+          <label>Adresse du vendeur</label>
+          <input type="text" id="inp-seller-addr" placeholder="0x..." />
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Note</label>
+            <select id="inp-score">
+              <option value="5">★★★★★ (5)</option>
+              <option value="4">★★★★☆ (4)</option>
+              <option value="3">★★★☆☆ (3)</option>
+              <option value="2">★★☆☆☆ (2)</option>
+              <option value="1">★☆☆☆☆ (1)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Commentaire</label>
+            <input type="text" id="inp-comment" placeholder="Votre avis..." />
+          </div>
+        </div>
+        <button class="btn btn-brand btn-lg" onclick="rateSeller()" style="width:100%;margin-top:0.5rem;">
+          Envoyer l'évaluation
+        </button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+  const CONTRACT_ADDRESS = "0x512D376DF93F0261Cc614cB0bC0cFE09F2b254b2";
+
+  const ABI = [
+    "function addProduct(string _name, uint256 _priceWei, uint256 _stock) external",
+    "function updateProduct(uint256 _id, uint256 _newPrice, uint256 _newStock) external",
+    "function removeProduct(uint256 _id) external",
+    "function buyProduct(uint256 _id, uint256 _quantity) external payable",
+    "function getProduct(uint256 _id) external view returns (tuple(uint256 id, string name, uint256 priceWei, uint256 stock, address seller, bool isActive))",
+    "function nextProductId() external view returns (uint256)",
+    "function getPurchaseCount() external view returns (uint256)",
+    "function getVersion() external pure returns (string)",
+    "function owner() external view returns (address)",
+    "function rateSeller(address _seller, uint8 _score, string _comment) external",
+    "function getSellerRating(address _seller) external view returns (uint256 count, uint256 average)",
+    "function getSellerRatings(address _seller) external view returns (tuple(address buyer, uint8 score, string comment)[])",
+    "event ProductAdded(uint256 indexed id, string name, uint256 priceWei, uint256 stock, address indexed seller)",
+    "event ProductPurchased(uint256 indexed id, address indexed buyer, uint256 quantity, uint256 totalPaid)",
+    "event SellerRated(address indexed seller, address indexed buyer, uint8 score, string comment)",
+  ];
+
+  const EXPECTED_CHAIN_ID = 11155111n;
+
+  // ══════════════════════════════════════════════════════════════════
+
+  let provider, signer, contract, userAddress, contractVersion;
+
+  // ─── Fruit images from Unsplash (free, no API key needed) ─────────
+  const fruitImages = {
+    pomme:     "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400&h=300&fit=crop",
+    apple:     "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400&h=300&fit=crop",
+    banane:    "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400&h=300&fit=crop",
+    banana:    "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400&h=300&fit=crop",
+    orange:    "https://images.unsplash.com/photo-1547514701-42782101795e?w=400&h=300&fit=crop",
+    fraise:    "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=400&h=300&fit=crop",
+    strawberry:"https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=400&h=300&fit=crop",
+    mangue:    "https://images.unsplash.com/photo-1553279768-865429fa0078?w=400&h=300&fit=crop",
+    mango:     "https://images.unsplash.com/photo-1553279768-865429fa0078?w=400&h=300&fit=crop",
+    raisin:    "https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=400&h=300&fit=crop",
+    grape:     "https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=400&h=300&fit=crop",
+    cerise:    "https://images.unsplash.com/photo-1528821128474-27f963b062bf?w=400&h=300&fit=crop",
+    cherry:    "https://images.unsplash.com/photo-1528821128474-27f963b062bf?w=400&h=300&fit=crop",
+    ananas:    "https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=400&h=300&fit=crop",
+    pineapple: "https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=400&h=300&fit=crop",
+    pasteque:  "https://images.unsplash.com/photo-1563114773-84221bd62daa?w=400&h=300&fit=crop",
+    watermelon:"https://images.unsplash.com/photo-1563114773-84221bd62daa?w=400&h=300&fit=crop",
+    citron:    "https://images.unsplash.com/photo-1590502593747-42a996133562?w=400&h=300&fit=crop",
+    lemon:     "https://images.unsplash.com/photo-1590502593747-42a996133562?w=400&h=300&fit=crop",
+    kiwi:      "https://images.unsplash.com/photo-1585059895524-72f834b93843?w=400&h=300&fit=crop",
+    peche:     "https://images.unsplash.com/photo-1629828874514-c1e5103f8358?w=400&h=300&fit=crop",
+    peach:     "https://images.unsplash.com/photo-1629828874514-c1e5103f8358?w=400&h=300&fit=crop",
+    poire:     "https://images.unsplash.com/photo-1514756331096-242fdeb70d4a?w=400&h=300&fit=crop",
+    pear:      "https://images.unsplash.com/photo-1514756331096-242fdeb70d4a?w=400&h=300&fit=crop",
+    avocat:    "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=400&h=300&fit=crop",
+    avocado:   "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=400&h=300&fit=crop",
+    tomate:    "https://images.unsplash.com/photo-1546470427-0d4db154ceb8?w=400&h=300&fit=crop",
+    tomato:    "https://images.unsplash.com/photo-1546470427-0d4db154ceb8?w=400&h=300&fit=crop",
+    melon:     "https://images.unsplash.com/photo-1571575173700-afb9492e6a50?w=400&h=300&fit=crop",
+  };
+
+  const defaultImg = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400&h=300&fit=crop"; // fruit bowl
+
+  function getFruitImage(name) {
+    const key = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "");
+    for (const [k, url] of Object.entries(fruitImages)) {
+      if (key.includes(k)) return url;
+    }
+    return defaultImg;
+  }
+
+  // ─── Jazzicon-style avatar from address ─────────────────────────
+  function addrGradient(addr) {
+    const h1 = parseInt(addr.slice(2, 8), 16) % 360;
+    const h2 = (h1 + 40) % 360;
+    return `linear-gradient(135deg, hsl(${h1},70%,60%), hsl(${h2},70%,50%))`;
+  }
+
+  // ─── Star rendering ─────────────────────────────────────────────
+  function renderStars(avg100) {
+    const rounded = Math.round(avg100 / 100);
+    let s = "";
+    for (let i = 1; i <= 5; i++) {
+      s += `<span class="${i <= rounded ? 'star-filled' : ''}">${i <= rounded ? '★' : '☆'}</span>`;
+    }
+    return s;
+  }
+
+  // ─── Toast ────────────────────────────────────────────────────────
+  function toast(msg, type = "info") {
+    const icons = { success: "✓", error: "✕", info: "ℹ" };
+    const container = document.getElementById("toast-container");
+    const el = document.createElement("div");
+    el.className = `toast ${type}`;
+    el.innerHTML = `<span class="toast-icon">${icons[type] || "ℹ"}</span> ${msg}`;
+    container.appendChild(el);
+    setTimeout(() => {
+      el.style.opacity = "0";
+      el.style.transform = "translateY(10px)";
+      el.style.transition = "all 0.3s ease";
+      setTimeout(() => el.remove(), 300);
+    }, 4000);
+  }
+
+  // ─── Tab switching ────────────────────────────────────────────────
+  function switchTab(tab) {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    document.querySelector(`[data-tab="${tab}"]`).classList.add("active");
+    document.getElementById(`tab-${tab}`).classList.add("active");
+
+    if (tab === "catalogue") loadProducts();
+    if (tab === "my-products") loadMyProducts();
+  }
+
+  // ─── Wallet connection ────────────────────────────────────────────
+  async function connectWallet() {
+    if (!window.ethereum) {
+      toast("MetaMask non détecté ! Installez-le d'abord.", "error");
+      return;
+    }
+
+    try {
+      provider = new ethers.BrowserProvider(window.ethereum);
+      const network = await provider.getNetwork();
+      if (network.chainId !== EXPECTED_CHAIN_ID) {
+        toast("Mauvais réseau ! Passez sur Sepolia.", "error");
+        return;
+      }
+
+      await provider.send("eth_requestAccounts", []);
+      signer = await provider.getSigner();
+      userAddress = await signer.getAddress();
+
+      contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+      try { contractVersion = await contract.getVersion(); } catch { contractVersion = "v1"; }
+
+      // Update UI
+      const short = userAddress.slice(0, 6) + "…" + userAddress.slice(-4);
+      document.getElementById("wallet-addr").textContent = short;
+      document.getElementById("wallet-addr").style.display = "";
+      document.getElementById("network-pill").style.display = "";
+      document.getElementById("version-display").innerHTML =
+        `<span class="badge badge-blue">${contractVersion.toUpperCase()}</span>`;
+      document.getElementById("connect-btn").textContent = "Connecté";
+      document.getElementById("connect-btn").disabled = true;
+
+      if (contractVersion === "v2") {
+        document.getElementById("tab-rate-btn").style.display = "";
+      }
+
+      // Show app, hide hero
+      document.getElementById("hero").style.display = "none";
+      document.getElementById("app").style.display = "block";
+
+      toast("Wallet connecté !", "success");
+      loadProducts();
+
+    } catch (err) {
+      console.error(err);
+      toast("Erreur de connexion : " + (err.reason || err.message), "error");
+    }
+  }
+
+  // ─── Load products ────────────────────────────────────────────────
+  async function loadProducts() {
+    if (!contract) return;
+    const grid = document.getElementById("product-grid");
+    grid.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><h3>Chargement des produits…</h3></div>';
+
+    try {
+      const count = await contract.nextProductId();
+      if (count === 0n) {
+        grid.innerHTML = '<div class="empty-state"><div class="icon">🍏</div><h3>Aucun produit</h3><p>Soyez le premier à vendre un fruit !</p></div>';
+        return;
+      }
+
+      let html = "";
+      for (let i = 0; i < Number(count); i++) {
+        const p = await contract.getProduct(i);
+        const priceEth = ethers.formatEther(p.priceWei);
+        const isOwn = p.seller.toLowerCase() === userAddress.toLowerCase();
+        const inactive = !p.isActive;
+        const imgUrl = getFruitImage(p.name);
+        const gradient = addrGradient(p.seller);
+
+        let stockBadge;
+        if (inactive) {
+          stockBadge = `<span class="stock-badge out">Retiré</span>`;
+        } else if (p.stock === 0n) {
+          stockBadge = `<span class="stock-badge out">Épuisé</span>`;
+        } else if (p.stock < 10n) {
+          stockBadge = `<span class="stock-badge low-stock">${p.stock} restant${p.stock > 1n ? 's' : ''}</span>`;
+        } else {
+          stockBadge = `<span class="stock-badge in-stock">${p.stock} en stock</span>`;
+        }
+
+        let ratingHtml = "";
+        if (contractVersion === "v2") {
+          try {
+            const [cnt, avg] = await contract.getSellerRating(p.seller);
+            if (cnt > 0n) {
+              ratingHtml = `<div class="rating-row">${renderStars(Number(avg))} <span style="margin-left:0.3rem;">(${cnt})</span></div>`;
+            }
+          } catch {}
+        }
+
+        html += `
+          <div class="product-card ${inactive ? 'inactive' : ''}" style="animation: fadeUp 0.4s ease ${i * 0.06}s both;" onclick="openProductModal(${i})">
+            <div class="product-img-wrap">
+              <img class="product-img" src="${imgUrl}" alt="${p.name}" loading="lazy"
+                   onerror="this.src='${defaultImg}'" />
+              <div class="stock-badge-overlay">${stockBadge}</div>
+            </div>
+            <div class="product-body">
+              <h3>${p.name}</h3>
+              <div class="product-meta">
+                <span class="product-price">${priceEth} <small>ETH</small></span>
+                <span class="seller-chip">
+                  <span class="avatar" style="background:${gradient}"></span>
+                  ${p.seller.slice(0, 6)}…${p.seller.slice(-4)}
+                </span>
+              </div>
+              ${ratingHtml}
+              ${(!inactive && p.stock > 0n && !isOwn) ? `
+                <div class="buy-section" onclick="event.stopPropagation()">
+                  <input class="qty-input" type="number" min="1" max="${p.stock}" value="1" id="qty-${i}" />
+                  <button class="btn btn-brand" onclick="buyProduct(${i})">Acheter</button>
+                </div>
+              ` : ""}
+              ${isOwn && !inactive ? '<div class="own-badge">Votre produit</div>' : ""}
+            </div>
+          </div>
+        `;
+      }
+      grid.innerHTML = html;
+
+    } catch (err) {
+      console.error(err);
+      grid.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Erreur de chargement</h3><p>Vérifiez l\'adresse du contrat.</p></div>';
+    }
+  }
+
+  // ─── Load my products ─────────────────────────────────────────────
+  async function loadMyProducts() {
+    if (!contract) return;
+    const container = document.getElementById("my-products-list");
+    container.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><h3>Chargement…</h3></div>';
+
+    try {
+      const count = await contract.nextProductId();
+      let html = "";
+      let found = false;
+
+      for (let i = 0; i < Number(count); i++) {
+        const p = await contract.getProduct(i);
+        if (p.seller.toLowerCase() !== userAddress.toLowerCase()) continue;
+        found = true;
+
+        const priceEth = ethers.formatEther(p.priceWei);
+        const imgUrl = getFruitImage(p.name);
+
+        html += `
+          <div class="my-product-item" style="animation: fadeUp 0.3s ease both;">
+            <img class="my-product-img" src="${imgUrl}" alt="${p.name}" onerror="this.src='${defaultImg}'" />
+            <div class="my-product-info">
+              <h3>${p.name} <span style="color:var(--text-3);font-weight:500;">#${p.id}</span></h3>
+              <p>${priceEth} ETH · ${p.stock} en stock · ${p.isActive ? '<span style="color:var(--green)">Actif</span>' : '<span style="color:var(--red)">Retiré</span>'}</p>
+            </div>
+            ${p.isActive ? `
+              <div class="my-product-actions">
+                <input type="number" step="0.001" min="0.001" id="upd-price-${i}" value="${priceEth}" placeholder="Prix ETH" />
+                <input type="number" step="1" min="0" id="upd-stock-${i}" value="${p.stock}" placeholder="Stock" />
+                <button class="btn btn-ghost" onclick="updateProduct(${i})">Modifier</button>
+                <button class="btn btn-danger" onclick="removeProduct(${i})">Retirer</button>
+              </div>
+            ` : ""}
+          </div>
+        `;
+      }
+
+      if (!found) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">📦</div><h3>Pas encore de produit</h3><p>Allez dans l\'onglet "Vendre" pour ajouter votre premier fruit.</p></div>';
+      } else {
+        container.innerHTML = html;
+      }
+
+    } catch (err) {
+      console.error(err);
+      container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Erreur</h3></div>';
+    }
+  }
+
+  // ─── Add product ──────────────────────────────────────────────────
+  async function addProduct() {
+    if (!contract) { toast("Connectez votre wallet.", "error"); return; }
+
+    const name = document.getElementById("inp-name").value.trim();
+    const priceStr = document.getElementById("inp-price").value;
+    const stock = parseInt(document.getElementById("inp-stock").value);
+
+    if (!name) { toast("Entrez un nom de fruit.", "error"); return; }
+    if (!priceStr || parseFloat(priceStr) <= 0) { toast("Prix invalide.", "error"); return; }
+    if (!stock || stock <= 0) { toast("Stock invalide.", "error"); return; }
+
+    const priceWei = ethers.parseEther(priceStr);
+
+    try {
+      const btn = document.getElementById("btn-add");
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Transaction en cours…';
+
+      const tx = await contract.addProduct(name, priceWei, stock);
+      toast("Transaction envoyée…", "info");
+      await tx.wait();
+
+      toast(`${name} ajouté au marché !`, "success");
+      document.getElementById("inp-name").value = "";
+      document.getElementById("inp-price").value = "";
+      document.getElementById("inp-stock").value = "";
+      loadProducts();
+
+    } catch (err) {
+      console.error(err);
+      handleTxError(err);
+    } finally {
+      const btn = document.getElementById("btn-add");
+      btn.disabled = false;
+      btn.textContent = "Mettre en vente";
+    }
+  }
+
+  // ─── Buy product ──────────────────────────────────────────────────
+  async function buyProduct(id) {
+    if (!contract) return;
+    const qty = parseInt(document.getElementById(`qty-${id}`).value);
+    if (!qty || qty <= 0) { toast("Quantité invalide.", "error"); return; }
+
+    try {
+      const p = await contract.getProduct(id);
+      const totalCost = p.priceWei * BigInt(qty);
+      toast(`Achat de ${qty}× ${p.name}…`, "info");
+
+      const tx = await contract.buyProduct(id, qty, { value: totalCost });
+      await tx.wait();
+
+      toast(`${qty}× ${p.name} acheté !`, "success");
+      loadProducts();
+
+    } catch (err) {
+      console.error(err);
+      handleTxError(err);
+    }
+  }
+
+  // ─── Update product ───────────────────────────────────────────────
+  async function updateProduct(id) {
+    if (!contract) return;
+    const newPriceStr = document.getElementById(`upd-price-${id}`).value;
+    const newStock = parseInt(document.getElementById(`upd-stock-${id}`).value);
+
+    if (!newPriceStr || parseFloat(newPriceStr) <= 0) { toast("Prix invalide.", "error"); return; }
+    if (isNaN(newStock) || newStock < 0) { toast("Stock invalide.", "error"); return; }
+
+    try {
+      const tx = await contract.updateProduct(id, ethers.parseEther(newPriceStr), newStock);
+      toast("Mise à jour…", "info");
+      await tx.wait();
+      toast("Produit mis à jour !", "success");
+      loadMyProducts();
+    } catch (err) {
+      console.error(err);
+      handleTxError(err);
+    }
+  }
+
+  // ─── Remove product ───────────────────────────────────────────────
+  async function removeProduct(id) {
+    if (!contract) return;
+    if (!confirm("Retirer ce produit du marché ?")) return;
+
+    try {
+      const tx = await contract.removeProduct(id);
+      toast("Retrait…", "info");
+      await tx.wait();
+      toast("Produit retiré.", "success");
+      loadMyProducts();
+    } catch (err) {
+      console.error(err);
+      handleTxError(err);
+    }
+  }
+
+  // ─── Rate seller (V2) ─────────────────────────────────────────────
+  async function rateSeller() {
+    if (!contract) return;
+    const addr = document.getElementById("inp-seller-addr").value.trim();
+    const score = parseInt(document.getElementById("inp-score").value);
+    const comment = document.getElementById("inp-comment").value.trim();
+
+    if (!ethers.isAddress(addr)) { toast("Adresse invalide.", "error"); return; }
+
+    try {
+      const tx = await contract.rateSeller(addr, score, comment);
+      toast("Évaluation en cours…", "info");
+      await tx.wait();
+      toast("Évaluation enregistrée !", "success");
+      document.getElementById("inp-seller-addr").value = "";
+      document.getElementById("inp-comment").value = "";
+    } catch (err) {
+      console.error(err);
+      handleTxError(err);
+    }
+  }
+
+  // ─── Product Detail Modal ─────────────────────────────────────────
+  function closeModal() {
+    document.getElementById("modal-overlay").classList.remove("open");
+    document.getElementById("modal-panel").classList.remove("open");
+    document.body.style.overflow = "";
+  }
+
+  async function openProductModal(id) {
+    if (!contract) return;
+
+    const overlay = document.getElementById("modal-overlay");
+    const panel = document.getElementById("modal-panel");
+    const inner = document.getElementById("modal-inner");
+
+    // Show loading state immediately
+    inner.innerHTML = '<div style="padding:3rem;text-align:center;color:var(--text-3);">Chargement…</div>';
+    overlay.classList.add("open");
+    panel.classList.add("open");
+    document.body.style.overflow = "hidden";
+
+    try {
+      const p = await contract.getProduct(id);
+      const priceEth = ethers.formatEther(p.priceWei);
+      const imgUrl = getFruitImage(p.name);
+      const gradient = addrGradient(p.seller);
+      const isOwn = p.seller.toLowerCase() === userAddress.toLowerCase();
+
+      let stockBadge;
+      if (!p.isActive) {
+        stockBadge = `<span class="stock-badge out">Retiré</span>`;
+      } else if (p.stock === 0n) {
+        stockBadge = `<span class="stock-badge out">Épuisé</span>`;
+      } else if (p.stock < 10n) {
+        stockBadge = `<span class="stock-badge low-stock">${p.stock} restant${p.stock > 1n ? 's' : ''}</span>`;
+      } else {
+        stockBadge = `<span class="stock-badge in-stock">${p.stock} en stock</span>`;
+      }
+
+      // Fetch seller rating summary
+      let ratingHtml = "";
+      let reviewsHtml = '<div class="no-reviews">Aucune évaluation pour ce vendeur.</div>';
+
+      if (contractVersion === "v2") {
+        try {
+          const [cnt, avg] = await contract.getSellerRating(p.seller);
+          if (cnt > 0n) {
+            ratingHtml = `<div class="rating-row" style="font-size:1rem;margin-bottom:0.3rem;">
+              ${renderStars(Number(avg))} 
+              <span style="margin-left:0.4rem;font-weight:600;">${(Number(avg) / 100).toFixed(1)}/5</span>
+              <span style="color:var(--text-3);margin-left:0.3rem;">(${cnt} avis)</span>
+            </div>`;
+
+            // Fetch individual reviews
+            const ratings = await contract.getSellerRatings(p.seller);
+            reviewsHtml = ratings.map((r, idx) => {
+              const buyerAddr = r[0];
+              const score = Number(r[1]);
+              const comment = r[2];
+              const rGradient = addrGradient(buyerAddr);
+              const shortAddr = buyerAddr.slice(0, 6) + "…" + buyerAddr.slice(-4);
+              return `
+                <div class="review-card" style="animation-delay:${idx * 0.08}s;">
+                  <div class="review-avatar" style="background:${rGradient};"></div>
+                  <div class="review-body">
+                    <div class="review-header">
+                      <span class="review-addr">${shortAddr}</span>
+                      <span class="review-stars">${renderStars(score * 100)}</span>
+                    </div>
+                    ${comment ? `<div class="review-comment">${comment}</div>` : '<div class="review-comment" style="font-style:italic;color:var(--text-3);">Pas de commentaire</div>'}
+                  </div>
+                </div>
+              `;
+            }).join("");
+          }
+        } catch (e) { console.warn("Ratings fetch error:", e); }
+      }
+
+      // Purchase count
+      const purchaseCount = await contract.getPurchaseCount();
+
+      inner.innerHTML = `
+        <img class="modal-img" src="${imgUrl.replace('w=400&h=300', 'w=600&h=350')}" alt="${p.name}" onerror="this.src='${defaultImg}'" />
+        <div class="modal-content">
+          <h2>${p.name}</h2>
+          ${ratingHtml}
+          
+          <div class="modal-price-row">
+            <span class="modal-price">${priceEth} <small>ETH</small></span>
+            ${stockBadge}
+          </div>
+
+          <div class="modal-details">
+            <div class="detail-box">
+              <div class="label">Vendeur</div>
+              <div class="value" style="display:flex;align-items:center;gap:0.4rem;">
+                <span style="width:14px;height:14px;border-radius:50%;display:inline-block;background:${gradient};"></span>
+                <span style="font-family:'SF Mono','Fira Code',monospace;font-size:0.82rem;">${p.seller.slice(0, 8)}…${p.seller.slice(-6)}</span>
+              </div>
+            </div>
+            <div class="detail-box">
+              <div class="label">ID Produit</div>
+              <div class="value">#${p.id}</div>
+            </div>
+            <div class="detail-box">
+              <div class="label">Stock disponible</div>
+              <div class="value">${p.stock} unité${Number(p.stock) !== 1 ? 's' : ''}</div>
+            </div>
+            <div class="detail-box">
+              <div class="label">Achats totaux (marché)</div>
+              <div class="value">${purchaseCount}</div>
+            </div>
+          </div>
+
+          ${(p.isActive && p.stock > 0n && !isOwn) ? `
+            <div class="modal-buy-section">
+              <input class="qty-input" type="number" min="1" max="${p.stock}" value="1" id="modal-qty-${id}" />
+              <button class="btn btn-brand btn-lg" onclick="buyFromModal(${id})">Acheter maintenant</button>
+            </div>
+          ` : ""}
+          ${isOwn ? '<div style="padding:1rem 0;color:var(--text-3);font-style:italic;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:1.5rem;">C\'est votre produit</div>' : ""}
+
+          <div class="reviews-title">💬 Évaluations du vendeur</div>
+          ${reviewsHtml}
+        </div>
+      `;
+
+    } catch (err) {
+      console.error(err);
+      inner.innerHTML = '<div style="padding:3rem;text-align:center;color:var(--red);">Erreur de chargement du produit.</div>';
+    }
+  }
+
+  async function buyFromModal(id) {
+    const qty = parseInt(document.getElementById(`modal-qty-${id}`).value);
+    if (!qty || qty <= 0) { toast("Quantité invalide.", "error"); return; }
+
+    try {
+      const p = await contract.getProduct(id);
+      const totalCost = p.priceWei * BigInt(qty);
+      toast(`Achat de ${qty}× ${p.name}…`, "info");
+
+      const tx = await contract.buyProduct(id, qty, { value: totalCost });
+      await tx.wait();
+
+      toast(`${qty}× ${p.name} acheté !`, "success");
+      closeModal();
+      loadProducts();
+    } catch (err) {
+      console.error(err);
+      handleTxError(err);
+    }
+  }
+
+  // Close modal on Escape key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeModal();
+  });
+
+  // ─── Error handler ────────────────────────────────────────────────
+  function handleTxError(err) {
+    const msg = err.reason || err.message || "Erreur inconnue";
+    if (msg.includes("user rejected") || msg.includes("denied")) {
+      toast("Transaction annulée.", "error");
+    } else if (msg.includes("insufficient funds")) {
+      toast("Fonds insuffisants.", "error");
+    } else if (msg.includes("InsufficientStock")) {
+      toast("Stock insuffisant !", "error");
+    } else if (msg.includes("InsufficientPayment")) {
+      toast("Paiement insuffisant !", "error");
+    } else if (msg.includes("NotTheSeller")) {
+      toast("Vous n'êtes pas le vendeur.", "error");
+    } else if (msg.includes("ProductInactive")) {
+      toast("Produit indisponible.", "error");
+    } else if (msg.includes("AlreadyRated")) {
+      toast("Déjà évalué ce vendeur.", "error");
+    } else if (msg.includes("CannotRateSelf")) {
+      toast("Impossible de s'évaluer soi-même.", "error");
+    } else {
+      toast("Erreur : " + msg.slice(0, 80), "error");
+    }
+  }
+
+  // ─── Account / chain changes ──────────────────────────────────────
+  if (window.ethereum) {
+    window.ethereum.on("accountsChanged", () => location.reload());
+    window.ethereum.on("chainChanged", () => location.reload());
+  }
+</script>
+</body>
+</html>
