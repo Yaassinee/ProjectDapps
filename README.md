@@ -360,4 +360,5 @@ Verifier que l'adresse du contrat dans frontend/index.html correspond bien a l'a
 
 Yassine EL Moumen - Maitrise en informatique, Universite Laval  
 Gaoussou KONATE - Maitrise en informatique, Universite Laval
+---
 IFT-7100 - Hiver 2026
