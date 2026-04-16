@@ -844,6 +844,232 @@
     .product-card { cursor: pointer; }
 
     /* ═══════════════════════════════════════════════════════════════════
+       CART — navbar icon + slide-in panel
+       ═══════════════════════════════════════════════════════════════════ */
+    .cart-trigger {
+      position: relative;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: all 0.15s;
+    }
+
+    .cart-trigger:hover {
+      background: var(--surface);
+      border-color: var(--brand);
+      transform: translateY(-1px);
+    }
+
+    .cart-badge {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: var(--brand);
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 800;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 5px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 0 2px var(--surface);
+      animation: badgePop 0.3s ease;
+    }
+
+    @keyframes badgePop {
+      0% { transform: scale(0); }
+      60% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    .cart-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 440px;
+      max-width: 100vw;
+      height: 100vh;
+      background: var(--surface);
+      z-index: 250;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(.4,0,.2,1);
+      box-shadow: -8px 0 40px rgba(0,0,0,0.12);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cart-panel.open { transform: translateX(0); }
+
+    .cart-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .cart-header h2 {
+      font-size: 1.2rem;
+      font-weight: 800;
+    }
+
+    .cart-items {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem 1.5rem;
+    }
+
+    .cart-item {
+      display: flex;
+      gap: 0.8rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+      animation: fadeUp 0.3s ease;
+    }
+
+    .cart-item:last-child { border-bottom: none; }
+
+    .cart-item-img {
+      width: 68px;
+      height: 68px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+      background: var(--surface-alt);
+      flex-shrink: 0;
+    }
+
+    .cart-item-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .cart-item-body h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+    }
+
+    .cart-item-body .price {
+      font-size: 0.82rem;
+      color: var(--text-2);
+      margin-bottom: 0.4rem;
+    }
+
+    .cart-qty-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .cart-qty-controls button {
+      width: 26px;
+      height: 26px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--text-2);
+      transition: all 0.15s;
+    }
+
+    .cart-qty-controls button:hover {
+      background: var(--surface-alt);
+      border-color: var(--brand);
+      color: var(--brand);
+    }
+
+    .cart-qty-val {
+      min-width: 28px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .cart-item-remove {
+      background: transparent;
+      border: none;
+      color: var(--red);
+      font-size: 0.82rem;
+      cursor: pointer;
+      font-weight: 600;
+      padding: 0.3rem 0;
+    }
+
+    .cart-item-remove:hover { text-decoration: underline; }
+
+    .cart-footer {
+      padding: 1.25rem 1.5rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface-alt);
+    }
+
+    .cart-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 1rem;
+    }
+
+    .cart-total-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-2);
+    }
+
+    .cart-total-value {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text-1);
+    }
+
+    .cart-total-value small {
+      font-size: 0.85rem;
+      color: var(--text-3);
+      font-weight: 600;
+    }
+
+    .cart-empty {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-3);
+    }
+
+    .cart-empty .icon { font-size: 3rem; margin-bottom: 1rem; }
+
+    /* Cart add-to-cart button on product cards */
+    .btn-cart-add {
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      border-radius: var(--radius-xs);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex: 0 0 auto;
+    }
+
+    .btn-cart-add:hover:not(:disabled) {
+      background: var(--brand-soft);
+      border-color: var(--brand);
+      color: var(--brand);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
        RESPONSIVE
        ═══════════════════════════════════════════════════════════════════ */
     @media (max-width: 640px) {
@@ -856,6 +1082,7 @@
       .my-product-item { flex-direction: column; text-align: center; }
       .my-product-actions { justify-content: center; }
       .modal-panel { width: 100vw; }
+      .cart-panel { width: 100vw; }
     }
   </style>
 </head>
@@ -873,6 +1100,10 @@
       <span class="dot"></span> Sepolia
     </span>
     <span id="wallet-addr" style="display:none;" class="wallet-addr"></span>
+    <div id="cart-trigger" class="cart-trigger" style="display:none;" onclick="openCart()" title="Panier">
+      🛒
+      <span id="cart-badge" class="cart-badge" style="display:none;">0</span>
+    </div>
     <button class="btn btn-brand" id="connect-btn" onclick="connectWallet()">
       Connect Wallet
     </button>
@@ -887,6 +1118,30 @@
 <div class="modal-panel" id="modal-panel">
   <button class="modal-close" onclick="closeModal()">✕</button>
   <div id="modal-inner"><!-- filled by JS --></div>
+</div>
+
+<!-- ══════════════ CART PANEL ══════════════ -->
+<div class="modal-overlay" id="cart-overlay" onclick="closeCart()"></div>
+<div class="cart-panel" id="cart-panel">
+  <div class="cart-header">
+    <h2>🛒 Votre panier</h2>
+    <button class="modal-close" style="position:static;" onclick="closeCart()">✕</button>
+  </div>
+  <div class="cart-items" id="cart-items-list">
+    <div class="cart-empty">
+      <div class="icon">🛒</div>
+      <p>Votre panier est vide</p>
+    </div>
+  </div>
+  <div class="cart-footer" id="cart-footer" style="display:none;">
+    <div class="cart-total-row">
+      <span class="cart-total-label">Total</span>
+      <span class="cart-total-value" id="cart-total">0 <small>ETH</small></span>
+    </div>
+    <button class="btn btn-brand btn-lg" id="checkout-btn" onclick="checkoutCart()" style="width:100%;">
+      Passer à l'achat
+    </button>
+  </div>
 </div>
 
 <main>
@@ -983,7 +1238,10 @@
 </main>
 
 <script>
-  const CONTRACT_ADDRESS = "0x512D376DF93F0261Cc614cB0bC0cFE09F2b254b2";
+  // ══════════════════════════════════════════════════════════════════
+  //  CONFIG — MODIFIER APRÈS DÉPLOIEMENT
+  // ══════════════════════════════════════════════════════════════════
+  const CONTRACT_ADDRESS = "0xaA2dF7549C3E0547C296D917753077F7A67BC172";
 
   const ABI = [
     "function addProduct(string _name, uint256 _priceWei, uint256 _stock) external",
@@ -1124,6 +1382,8 @@
       document.getElementById("wallet-addr").textContent = short;
       document.getElementById("wallet-addr").style.display = "";
       document.getElementById("network-pill").style.display = "";
+      document.getElementById("cart-trigger").style.display = "";
+      updateCartBadge();
       document.getElementById("version-display").innerHTML =
         `<span class="badge badge-blue">${contractVersion.toUpperCase()}</span>`;
       document.getElementById("connect-btn").textContent = "Connecté";
@@ -1209,6 +1469,7 @@
               ${(!inactive && p.stock > 0n && !isOwn) ? `
                 <div class="buy-section" onclick="event.stopPropagation()">
                   <input class="qty-input" type="number" min="1" max="${p.stock}" value="1" id="qty-${i}" />
+                  <button class="btn btn-cart-add" onclick="addToCartFromCard(${i})" title="Ajouter au panier">🛒</button>
                   <button class="btn btn-brand" onclick="buyProduct(${i})">Acheter</button>
                 </div>
               ` : ""}
@@ -1513,7 +1774,8 @@
           ${(p.isActive && p.stock > 0n && !isOwn) ? `
             <div class="modal-buy-section">
               <input class="qty-input" type="number" min="1" max="${p.stock}" value="1" id="modal-qty-${id}" />
-              <button class="btn btn-brand btn-lg" onclick="buyFromModal(${id})">Acheter maintenant</button>
+              <button class="btn btn-ghost" onclick="addToCartFromModal(${id})">🛒 Ajouter au panier</button>
+              <button class="btn btn-brand" onclick="buyFromModal(${id})">Acheter</button>
             </div>
           ` : ""}
           ${isOwn ? '<div style="padding:1rem 0;color:var(--text-3);font-style:italic;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:1.5rem;">C\'est votre produit</div>' : ""}
@@ -1555,6 +1817,199 @@
     if (e.key === "Escape") closeModal();
   });
 
+  // ═══════════════════════════════════════════════════════════════════
+  //  CART LOGIC — localStorage persisted + checkout loop
+  // ═══════════════════════════════════════════════════════════════════
+
+  const CART_KEY = "fruitMarketCart";
+  let cart = [];
+
+  // Load cart from localStorage on init
+  try {
+    cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
+  } catch { cart = []; }
+
+  function saveCart() {
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    updateCartBadge();
+  }
+
+  function updateCartBadge() {
+    const badge = document.getElementById("cart-badge");
+    const total = cart.reduce((sum, item) => sum + item.qty, 0);
+    if (total > 0) {
+      badge.textContent = total;
+      badge.style.display = "";
+    } else {
+      badge.style.display = "none";
+    }
+  }
+
+  async function addToCartFromCard(id) {
+    const qty = parseInt(document.getElementById(`qty-${id}`).value);
+    if (!qty || qty <= 0) { toast("Quantité invalide.", "error"); return; }
+    const p = await contract.getProduct(id);
+    _addToCart(Number(p.id), p.name, p.priceWei.toString(), qty);
+  }
+
+  async function addToCartFromModal(id) {
+    const qty = parseInt(document.getElementById(`modal-qty-${id}`).value);
+    if (!qty || qty <= 0) { toast("Quantité invalide.", "error"); return; }
+    const p = await contract.getProduct(id);
+    _addToCart(Number(p.id), p.name, p.priceWei.toString(), qty);
+  }
+
+  function _addToCart(productId, name, priceWeiStr, qty) {
+    const existing = cart.find(i => i.productId === productId);
+    if (existing) {
+      existing.qty += qty;
+    } else {
+      cart.push({
+        productId,
+        name,
+        priceWei: priceWeiStr,
+        image: getFruitImage(name),
+        qty,
+      });
+    }
+    saveCart();
+    toast(`${qty}× ${name} ajouté au panier`, "success");
+  }
+
+  function removeFromCart(productId) {
+    cart = cart.filter(i => i.productId !== productId);
+    saveCart();
+    renderCart();
+  }
+
+  function changeCartQty(productId, delta) {
+    const item = cart.find(i => i.productId === productId);
+    if (!item) return;
+    item.qty += delta;
+    if (item.qty <= 0) {
+      removeFromCart(productId);
+    } else {
+      saveCart();
+      renderCart();
+    }
+  }
+
+  function openCart() {
+    renderCart();
+    document.getElementById("cart-panel").classList.add("open");
+    document.getElementById("cart-overlay").classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeCart() {
+    document.getElementById("cart-panel").classList.remove("open");
+    document.getElementById("cart-overlay").classList.remove("open");
+    document.body.style.overflow = "";
+  }
+
+  function renderCart() {
+    const list = document.getElementById("cart-items-list");
+    const footer = document.getElementById("cart-footer");
+
+    if (cart.length === 0) {
+      list.innerHTML = '<div class="cart-empty"><div class="icon">🛒</div><p>Votre panier est vide</p></div>';
+      footer.style.display = "none";
+      return;
+    }
+
+    let totalWei = 0n;
+    let html = "";
+    for (const item of cart) {
+      const priceWei = BigInt(item.priceWei);
+      const itemTotalWei = priceWei * BigInt(item.qty);
+      totalWei += itemTotalWei;
+      const priceEth = ethers.formatEther(priceWei);
+      const itemTotalEth = ethers.formatEther(itemTotalWei);
+
+      html += `
+        <div class="cart-item">
+          <img class="cart-item-img" src="${item.image}" alt="${item.name}" onerror="this.src='${defaultImg}'" />
+          <div class="cart-item-body">
+            <h4>${item.name}</h4>
+            <div class="price">${priceEth} ETH × ${item.qty} = ${itemTotalEth} ETH</div>
+            <div class="cart-qty-controls">
+              <button onclick="changeCartQty(${item.productId}, -1)">−</button>
+              <span class="cart-qty-val">${item.qty}</span>
+              <button onclick="changeCartQty(${item.productId}, 1)">+</button>
+              <button class="cart-item-remove" onclick="removeFromCart(${item.productId})">Retirer</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    list.innerHTML = html;
+    document.getElementById("cart-total").innerHTML = `${ethers.formatEther(totalWei)} <small>ETH</small>`;
+    footer.style.display = "";
+  }
+
+  async function checkoutCart() {
+    if (!contract) { toast("Connectez votre wallet.", "error"); return; }
+    if (cart.length === 0) return;
+
+    const btn = document.getElementById("checkout-btn");
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Traitement…';
+
+    const items = [...cart];
+    let successCount = 0;
+    let failCount = 0;
+    let userCancelled = false;
+
+    for (let idx = 0; idx < items.length; idx++) {
+      const item = items[idx];
+      try {
+        toast(`Achat ${idx + 1}/${items.length} : ${item.name}…`, "info");
+        const priceWei = BigInt(item.priceWei);
+        const totalCost = priceWei * BigInt(item.qty);
+        const tx = await contract.buyProduct(item.productId, item.qty, { value: totalCost });
+        await tx.wait();
+
+        // Success : remove from cart
+        cart = cart.filter(i => i.productId !== item.productId);
+        saveCart();
+        renderCart();
+        successCount++;
+
+      } catch (err) {
+        console.error("Checkout error:", err);
+        failCount++;
+        const msg = err.reason || err.message || "";
+        if (msg.includes("user rejected") || msg.includes("denied")) {
+          toast("Achats annulés.", "error");
+          userCancelled = true;
+          break;
+        } else if (msg.includes("InsufficientStock")) {
+          toast(`${item.name} : stock insuffisant.`, "error");
+        } else if (msg.includes("insufficient funds")) {
+          toast("Fonds insuffisants.", "error");
+          break;
+        } else {
+          toast(`Erreur pour ${item.name}.`, "error");
+        }
+      }
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = "Passer à l'achat";
+
+    if (successCount > 0) toast(`✓ ${successCount} achat(s) réussi(s) !`, "success");
+
+    if (cart.length === 0) {
+      setTimeout(() => closeCart(), 1500);
+    }
+
+    loadProducts();
+  }
+
+  // Initialize cart badge on page load (before wallet connect)
+  updateCartBadge();
+
   // ─── Error handler ────────────────────────────────────────────────
   function handleTxError(err) {
     const msg = err.reason || err.message || "Erreur inconnue";
@@ -1587,3 +2042,4 @@
 </script>
 </body>
 </html>
+
