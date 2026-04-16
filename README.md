@@ -152,10 +152,8 @@ npx http-server frontend -p 3000
 | Élément | Détail |
 |---|---|
 | **Réseau** | Ethereum Sepolia Testnet |
-| **Proxy** | `0x512D376DF93F0261Cc614cB0bC0cFE09F2b254b2` |
-| **Implémentation V1** | `0x0De9E7cC252ccFBBBf176cD88276c5a934a38f61` |
-| **Implémentation V2** | `0x524999f71Af9e2b02d872764d40623f2DA3451B1` |
-| **Explorateur** | [Voir sur Etherscan](https://sepolia.etherscan.io/address/0x512D376DF93F0261Cc614cB0bC0cFE09F2b254b2) |
+| **Proxy** | `0xaA2dF7549C3E0547C296D917753077F7A67BC172` |
+| **Explorateur** | [Voir sur Etherscan](https://sepolia.etherscan.io/address/0xaA2dF7549C3E0547C296D917753077F7A67BC172) |
 
 ---
 
