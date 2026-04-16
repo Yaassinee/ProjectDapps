@@ -122,6 +122,8 @@ Votre compte MetaMask doit avoir de l'ETH de test pour payer le gas des transact
 - https://sepoliafaucet.com/
 - https://www.alchemy.com/faucets/ethereum-sepolia
 - https://faucet.quicknode.com/ethereum/sepolia
+- **https://sepolia-faucet.pk910.de/**
+- **https://cloud.google.com/application/web3/faucet/ethereum/sepolia**
 
 Coller votre adresse MetaMask dans le faucet et recevoir environ 0.5 ETH de test (largement suffisant pour le TP).
 
