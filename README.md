@@ -41,15 +41,26 @@ Marketplace décentralisée pour acheter et vendre des fruits sur Ethereum.
 - Évaluation des vendeurs (note 1-5 + commentaire)
 - Un acheteur ne peut évaluer un vendeur qu'une seule fois
 - Note moyenne calculée on-chain
-- Panel de détail avec affichage des commentaires et adresses des évaluateurs
 - **L'état de V1 est intégralement conservé après l'upgrade**
 
 ### Frontend
-- Design moderne inspiré OpenSea/Uniswap (glassmorphism, animations)
+- Design moderne inspiré OpenSea/Uniswap (glassmorphism, animations fluides)
 - Photos réelles des fruits via Unsplash (16+ fruits supportés, FR et EN)
-- Panel de détail slide-in au clic sur un produit (infos + achats + évaluations)
+- **Panel de détail slide-in** au clic sur un produit avec :
+  - Grande image et informations détaillées
+  - Statistiques du vendeur (note moyenne, nombre d'avis)
+  - Liste complète des évaluations avec commentaires et adresses des évaluateurs
+  - Boutons d'achat direct ou ajout au panier
+- **Panier persistant** (localStorage) avec :
+  - Icône dans la barre de navigation + badge compteur animé
+  - Slide-in panel latéral listant les articles avec images
+  - Contrôles +/− pour ajuster les quantités
+  - Total calculé en ETH
+  - Bouton "Passer à l'achat" qui traite les articles en séquence
+  - Persistance entre les rechargements de page
 - Avatars colorés générés à partir des adresses wallet
 - Détection automatique du réseau et gestion d'erreurs complète
+- Toasts de notification (succès, erreur, info)
 - Connexion MetaMask avec rechargement automatique au changement de compte
 
 ---
@@ -73,7 +84,7 @@ npm install
 
 # Copier le fichier d'environnement
 cp .env.example .env
-# ⚠️ Remplir .env avec votre clé privée et URL RPC
+# !!! Remplir .env avec votre clé privée et URL RPC !!!
 ```
 
 ---
@@ -92,16 +103,14 @@ npx hardhat compile
 npx hardhat test
 ```
 
-Les tests couvrent :
-1. **Déploiement** du contrat (adresse non nulle, owner correct, version v1)
+**17 tests automatisés** couvrant :
+1. **Déploiement** (adresse non nulle, owner correct, version v1)
 2. **Ajout d'un fruit** (nom/prix/stock corrects, événement émis, validations)
 3. **Achat** (transfert de fonds au vendeur, stock mis à jour, achat enregistré, remboursement surplus)
 4. **Achat avec fonds insuffisants** → revert propre
 5. **Mise à jour de produit** avec contrôle d'accès (seul le vendeur peut modifier)
 6. **Suppression de produit** (désactivation par le vendeur)
 7. **Upgrade V1 → V2** : état conservé + nouvelle fonctionnalité (ratings) disponible + anti-doublon vérifié
-
-**Total : 17 tests automatisés.**
 
 ---
 
@@ -118,10 +127,10 @@ Copier l'adresse du proxy dans `.env` (variable `PROXY_ADDRESS`).
 ### 2. Upgrade vers V2
 
 ```bash
-npx hardhat clean
-npx hardhat compile
 npx hardhat run scripts/upgrade.js --network sepolia
 ```
+
+Le script **nettoie automatiquement le cache** avant l'upgrade (supprime `cache/`, `artifacts/`, et les fichiers `.openzeppelin/unknown-*.json`) pour garantir une compilation fraîche et un déploiement correct de V2. Aucune intervention manuelle nécessaire.
 
 ### 3. Configurer le frontend
 
@@ -136,14 +145,30 @@ par l'adresse du proxy déployé.
 ## Lancement du frontend
 
 ```bash
-# Ouvrir directement dans le navigateur ou avec un serveur local :
+# Avec un serveur local :
 npx http-server frontend -p 3000
 ```
 
 1. Ouvrir `http://localhost:3000` dans Chrome
 2. Connecter MetaMask sur le réseau Sepolia
-3. Naviguer dans les onglets : Catalogue / Vendre / Mes produits / Évaluer (V2)
+3. Naviguer dans les onglets : **Catalogue / Vendre / Mes produits / Évaluer** (V2)
 4. Cliquer sur un produit pour ouvrir le panel de détail avec les évaluations
+5. Cliquer sur l'icône 🛒 pour accéder au panier
+
+### Guide d'utilisation
+
+**En tant que vendeur :**
+- Onglet **Vendre** → entrer nom, prix, stock → "Mettre en vente"
+- Onglet **Mes produits** → modifier prix/stock ou retirer un produit
+
+**En tant qu'acheteur :**
+- **Catalogue** → achat direct via "Acheter" ou ajouter au panier via 🛒
+- Cliquer sur une carte pour voir les détails + évaluations du vendeur
+- Panier → ajuster les quantités → "Passer à l'achat" (une transaction par article avec toasts de progression)
+
+**Évaluation (V2) :**
+- Onglet **Évaluer** → coller l'adresse du vendeur → donner une note 1-5 + commentaire
+- Les commentaires s'affichent dans le panel de détail des produits du vendeur
 
 ---
 
@@ -152,10 +177,8 @@ npx http-server frontend -p 3000
 | Élément | Détail |
 |---|---|
 | **Réseau** | Ethereum Sepolia Testnet |
-| **Proxy** | `0x512D376DF93F0261Cc614cB0bC0cFE09F2b254b2` |
-| **Implémentation V1** | `0x0De9E7cC252ccFBBBf176cD88276c5a934a38f61` |
-| **Implémentation V2** | `0x524999f71Af9e2b02d872764d40623f2DA3451B1` |
-| **Explorateur** | [Voir sur Etherscan](https://sepolia.etherscan.io/address/0x512D376DF93F0261Cc614cB0bC0cFE09F2b254b2) |
+| **Proxy** | `0xaA2dF7549C3E0547C296D917753077F7A67BC172` |
+| **Explorateur** | [Voir sur Etherscan](https://sepolia.etherscan.io/address/0xaA2dF7549C3E0547C296D917753077F7A67BC172) |
 
 ---
 
@@ -164,9 +187,10 @@ npx http-server frontend -p 3000
 - **OwnableUpgradeable** : seul le owner peut upgrader le contrat via `_authorizeUpgrade`
 - **Reentrancy Guard manuel** : implémenté sans constructeur (compatible proxy UUPS), protège `buyProduct`
 - **Checks-Effects-Interactions** : le stock est déduit AVANT le transfert d'ETH
-- **Custom errors** : erreurs explicites et gas-efficient (`InsufficientPayment`, `NotTheSeller`, etc.)
+- **Custom errors** : erreurs explicites et gas-efficient (`InsufficientPayment`, `NotTheSeller`, `AlreadyRated`, etc.)
 - **Validations d'entrées** : nom non vide, prix > 0, quantité > 0, score entre 1 et 5
-- **Anti-doublon** : un acheteur ne peut évaluer un vendeur qu'une seule fois
+- **Anti-doublon** : un acheteur ne peut évaluer un vendeur qu'une seule fois (`hasRated` mapping)
+- **Anti auto-évaluation** : un vendeur ne peut pas s'évaluer lui-même
 - **Pas de clé privée dans le code** : tout est dans `.env` (non versionné via `.gitignore`)
 
 ---
@@ -182,9 +206,9 @@ fruit-market-dapp/
 │   └── FruitMarket.test.js   # Suite de tests (17 tests)
 ├── scripts/
 │   ├── deploy.js             # Déploiement V1 via proxy UUPS
-│   └── upgrade.js            # Upgrade V1 → V2
+│   └── upgrade.js            # Upgrade V1 → V2 (auto-clean cache)
 ├── frontend/
-│   └── index.html            # Interface utilisateur complète
+│   └── index.html            # Interface utilisateur complète (SPA vanilla)
 ├── hardhat.config.js
 ├── package.json
 ├── .env.example
@@ -200,16 +224,17 @@ fruit-market-dapp/
 |---|---|
 | Smart contracts | Solidity 0.8.24 |
 | Framework | Hardhat |
-| Proxy pattern | UUPS (OpenZeppelin) |
+| Proxy pattern | UUPS (OpenZeppelin Upgrades) |
 | Librairie frontend | ethers.js v6 |
 | Wallet | MetaMask |
 | Réseau | Ethereum Sepolia |
 | Fonts | Plus Jakarta Sans (Google Fonts) |
 | Images | Unsplash (CDN) |
+| Persistance locale | localStorage (panier) |
 
 ---
 
 ## Auteur
 
-**Yassine** — Maîtrise en informatique, Université Laval  
-IFT-4100/7100 — Hiver 2026
+**Yassine EL Moumen** — Maîtrise en informatique, Université Laval  
+IFT-7100 — Hiver 2026
